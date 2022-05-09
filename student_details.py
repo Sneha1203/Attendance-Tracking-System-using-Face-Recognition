@@ -1,15 +1,17 @@
-from importlib.resources import contents
 from tkinter import *
 from tkinter import ttk
 from PIL import Image, ImageTk
 from tkinter import messagebox
 import mysql.connector
+import cv2
+import os
 
 
 class Student:
     def __init__ (self, root):
         self.root = root
         self.root.geometry("1920x1090+0+0")
+        self.root.configure(bg='#c9ada7')
         self.root.title("Face Recognition System")
 
 
@@ -219,7 +221,7 @@ class Student:
 
 
         # take photo sample button
-        take_sample_btn = Button(btn_frame, text='Take Sample Photo', font=('Helvectica', 12), bg='#c9ada7', width=32)
+        take_sample_btn = Button(btn_frame, text='Take Sample Photo', command=self.generate_dataset, font=('Helvectica', 12), bg='#c9ada7', width=32)
         take_sample_btn.grid(row=2, column=0, padx=5, pady=10)
 
 
@@ -464,11 +466,82 @@ class Student:
 
 
 
+    def generate_dataset(self):
+        if self.var_dept.get() == 'Select Department' or self.var_student_name.get() == '' or self.var_student_id.get() == '':
+            messagebox.showerror("Error", "All fields are required", parent=self.root)
+        else:
+            try:
+                conn = mysql.connector.connect(host='localhost', username='root', password='sneha1203', database='face_recognizer')
+                my_cursor = conn.cursor()
+                my_cursor.execute('select * from student')
+                result = my_cursor.fetchall()
+                id = 0
+                for res in result:
+                    id += 1
+                my_cursor.execute("update student set dept=%s, course=%s, year=%s, semester=%s, student_id=%s, student_name=%s, section=%s, roll_no=%s, gender=%s, mobile_no=%s, email=%s, teacher=%s, photo_sample=%s", 
+                                        (
+                                            self.var_dept.get(),
+                                            self.var_course.get(),
+                                            self.var_year.get(), 
+                                            self.var_semester.get(),
+                                            self.var_student_id.get() == id+1,
+                                            self.var_student_name.get(),
+                                            self.var_section.get(),
+                                            self.var_roll_no.get(),
+                                            self.var_gender.get(),
+                                            self.var_mobile_no.get(),
+                                            self.var_email.get(),
+                                            self.var_teacher.get(),
+                                            self.take_sample_radio.get()
+                                        ))
+                conn.commit()
+                self.fetch_data()
+                self.reset_data()
+                conn.close()   
+
+                face_classifier = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')  
+
+                def face_cropped(img):
+                    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                    faces = face_classifier.detectMultiScale(gray, 1.3, 5)
+                    # scaling factor = 1.3
+                    # neighbour = 5
+
+                    for (x, y, w, h) in faces:
+                        face_cropped = img[y:y+h, x:x+w]
+                        return face_cropped
+
+
+                camera = cv2.VideoCapture(0)
+                img_id = 0
+                while True:
+                    ret, my_frame = camera.read()
+                    
+                    if face_cropped (my_frame) is not None:
+                        img_id += 1
+                        face = cv2.resize(face_cropped(my_frame), (450, 450))
+                        face = cv2.cvtColor(face, cv2.COLOR_BGR2GRAY)
+                        file_path = 'data/user.' + str(id) + "." + str(img_id) + ".jpg"
+                        cv2.imwrite(file_path, face)
+                        cv2.putText(face, str(img_id), (50, 50), cv2.FONT_HERSHEY_COMPLEX, 1, (0, 255, 0), 1)
+                        cv2.imshow('Cropped Face', face)
+
+                    if cv2.waitKey(1) == 13 or int(img_id) == 100:
+                        break
+                camera.release()
+                cv2.destroyAllWindows()
+                messagebox.showinfo('Result', 'Data Sets Generated Successfully!', parent=self.root)
+
+            except Exception as err:
+                messagebox.showerror('Error', f'Due To: {str(err)}', parent = self.root)
+
+
+
+
+                 
+
 
 if __name__ == "__main__":
     root = Tk()
     obj = Student(root)
-    root.configure(bg='#c9ada7')
-    # label = Label(root, bg='#f2e9e4', text='ATTENDANCE TRACKING SYSTEM USING FACE RECOGNITION', font=('Helvectica', 25))
-    # label.place(x=0, y=30, width=1920, height=90)
     root.mainloop()
