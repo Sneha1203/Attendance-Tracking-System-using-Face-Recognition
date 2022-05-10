@@ -7,6 +7,10 @@ import mysql.connector
 import cv2
 import os
 import numpy as np
+from time import strftime
+from datetime import datetime
+import functools
+import operator
 
 
 class FaceDetector:
@@ -20,9 +24,26 @@ class FaceDetector:
         label = Label(self.root, bg='#f2e9e4', text='FACE DETECTION', font=('Helvectica', 25))
         label.place(x=0, y=30, width=1920, height=90)
 
-        # train data buttn
-        train_data_btn = Button(self.root, text='Click here to start Face Detector', command=self.face_recognition, bg='#f2e9e4', activebackground='#c9ada7', bd=0, cursor='hand2', font=('Helvectica', 15))
-        train_data_btn.place(x=800, y=450, width=360, height=150)
+        # face detection button
+        face_detect_btn = Button(self.root, text='Click here to start Face Detector', command=self.face_recognition, bg='#f2e9e4', activebackground='#c9ada7', bd=0, cursor='hand2', font=('Helvectica', 15))
+        face_detect_btn.place(x=800, y=450, width=360, height=150)
+
+
+    def attendance(self, student_id, roll_no, student_name):
+        with open('attendance.csv', 'r+', newline='\n') as file:
+            data_list = file.readlines()
+            name_list = []
+            for line in data_list:
+                entry = line.split((','))
+                name_list.append(entry[0])
+
+            if((student_id not in name_list) and (roll_no not in name_list) and (student_name not in name_list)):
+                now = datetime.now()
+                date_str = now.strftime ('%d/%m/%Y')
+                time_str = now.strftime('%H:%M:%S')
+                file.writelines(f'\n{student_id}, {roll_no}, {student_name}, {time_str}, {date_str}, Present')
+
+                
 
 
     def face_recognition(self):
@@ -40,22 +61,24 @@ class FaceDetector:
                 conn = mysql.connector.connect(host='localhost', username='root', password='sneha1203', database='face_recognizer')
                 my_cursor = conn.cursor()
 
-                my_cursor.execute('select student_name from student where student_id=' + str(id))
-                student_name = my_cursor.fetchone()
-                student_name = '+'.join(student_name)
+                my_cursor.execute('select * from student where student_id=' + str(id))
+                result = my_cursor.fetchone()
+                if result is not None:
+                    student_name = result[5]
 
-                my_cursor.execute('select roll_no from student where student_id=' + str(id))
-                roll_no = my_cursor.fetchone()
-                roll_no = '+'.join(str(roll_no))
+                # my_cursor.execute('select * from student where student_id=' + str(id))
+                # roll = my_cursor.fetchone()
+                    roll_no = result[7]
 
-                my_cursor.execute('select dept from student where student_id=' + str(id))
-                dept = my_cursor.fetchone()
-                dept = '+'.join(dept)
+                # my_cursor.execute('select * from student where student_id=' + str(id))
+                # s_id = my_cursor.fetchone()
+                    student_id = result[4]
 
-                if confidence > 77:
-                    cv2.putText(image, f'Roll No.: {roll_no}', (x, y-55), cv2.FONT_HERSHEY_COMPLEX, 0.8, (255, 255, 255), 1)
-                    cv2.putText(image, f'Name: {student_name}', (x, y-30), cv2.FONT_HERSHEY_COMPLEX, 0.8, (255, 255, 255), 1)
-                    cv2.putText(image, f'Department: {dept}', (x, y-5), cv2.FONT_HERSHEY_COMPLEX, 0.8, (255, 255, 255), 1)
+                    if confidence > 80:
+                        cv2.putText(image, f'ID: {student_id}', (x, y-55), cv2.FONT_HERSHEY_COMPLEX, 0.8, (255, 255, 255), 1)
+                        cv2.putText(image, f'Roll No.: {roll_no}', (x, y-30), cv2.FONT_HERSHEY_COMPLEX, 0.8, (255, 255, 255), 1)
+                        cv2.putText(image, f'Name: {student_name}', (x, y-5), cv2.FONT_HERSHEY_COMPLEX, 0.8, (255, 255, 255), 1)
+                        self.attendance(student_id, roll_no, student_name)
                 else:
                     cv2.rectangle(image, (x, y), (x+w, y+h), (0, 0, 255), 1)
                     cv2.putText(image, 'Unknown Face', (x, y-5), cv2.FONT_HERSHEY_COMPLEX, 0.8, (255, 255, 255), 1)

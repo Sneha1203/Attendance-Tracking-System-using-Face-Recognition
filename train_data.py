@@ -49,10 +49,7 @@ class TrainData:
         messagebox.showinfo('Results', 'Data Sets Trained Successfully!', parent=self.root)
 
 
-
-
-
 if __name__ == "__main__":
     root = Tk()
     obj = TrainData(root)
-    root.mainloop()
+    root.mainloop() 

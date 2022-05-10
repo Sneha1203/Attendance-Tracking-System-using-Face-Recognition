@@ -31,8 +31,6 @@ class Student:
         self.take_sample_radio = StringVar()
 
 
-
-
         # heading
         label = Label(self.root, bg='#f2e9e4', text='STUDENT DETAILS', font=('Helvectica', 25))
         label.place(x=0, y=30, width=1920, height=90)
@@ -147,14 +145,6 @@ class Student:
         gender_label_combo['values'] = ('Select Gender', 'Male', 'Female', 'Other', 'Prefer not to say')
         gender_label_combo.current(0)
         gender_label_combo.grid(row=2, column=1, padx=2, pady=10, sticky=W)
-
-
-        # enter date of birth
-        # roll_no_label = Label(class_student_frame, text='Roll Number:', font=('Helvectica', 12))
-        # roll_no_label.grid(row=1, column=2, padx=5, sticky=W)
-
-        # roll_no_entry = ttk.Entry(class_student_frame, textvariable=self.var_roll_no, font=('Helvectica', 12), width=17)
-        # roll_no_entry.grid(row=1, column=3, padx=2, pady=10, sticky=W)
 
 
         # enter email address
@@ -348,7 +338,6 @@ class Student:
                 self.fetch_data()
                 conn.close()
                 messagebox.showinfo('Success', 'Student Details Added Successfully!', parent=self.root)
-            
             except Exception as err:
                 messagebox.showerror('Error', f'Due to: {str(err)}', parent=self.root)
 
@@ -397,13 +386,12 @@ class Student:
                 if ask_for_update > 0:
                     conn = mysql.connector.connect(host='localhost', username='root', password='sneha1203', database='face_recognizer')
                     my_cursor = conn.cursor()
-                    my_cursor.execute("update student set dept=%s, course=%s, year=%s, semester=%s, student_id=%s, student_name=%s, section=%s, roll_no=%s, gender=%s, mobile_no=%s, email=%s, teacher=%s, photo_sample=%s", 
+                    my_cursor.execute ("update student set dept=%s, course=%s, year=%s, semester=%s, student_name=%s, section=%s, roll_no=%s, gender=%s, mobile_no=%s, email=%s, teacher=%s, photo_sample=%s where student_id=%s", 
                                         (
                                             self.var_dept.get(),
                                             self.var_course.get(),
                                             self.var_year.get(), 
                                             self.var_semester.get(),
-                                            self.var_student_id.get(),
                                             self.var_student_name.get(),
                                             self.var_section.get(),
                                             self.var_roll_no.get(),
@@ -411,12 +399,13 @@ class Student:
                                             self.var_mobile_no.get(),
                                             self.var_email.get(),
                                             self.var_teacher.get(),
-                                            self.take_sample_radio.get()
+                                            self.take_sample_radio.get(),
+                                            self.var_student_id.get()
                                         ))
                 else:
                     if not ask_for_update:
                         return
-                messagebox.showinfo('Success', 'Student Details Updates Successfully!', parent = self.root)
+                messagebox.showinfo('Success', 'Student Details Updated Successfully!', parent = self.root)
                 conn.commit()
                 self.fetch_data()
                 conn.close()
@@ -478,13 +467,12 @@ class Student:
                 id = 0
                 for res in result:
                     id += 1
-                my_cursor.execute("update student set dept=%s, course=%s, year=%s, semester=%s, student_id=%s, student_name=%s, section=%s, roll_no=%s, gender=%s, mobile_no=%s, email=%s, teacher=%s, photo_sample=%s", 
+                    my_cursor.execute ("update student set dept=%s, course=%s, year=%s, semester=%s, student_name=%s, section=%s, roll_no=%s, gender=%s, mobile_no=%s, email=%s, teacher=%s, photo_sample=%s where student_id=%s", 
                                         (
                                             self.var_dept.get(),
                                             self.var_course.get(),
                                             self.var_year.get(), 
                                             self.var_semester.get(),
-                                            self.var_student_id.get() == id+1,
                                             self.var_student_name.get(),
                                             self.var_section.get(),
                                             self.var_roll_no.get(),
@@ -492,7 +480,8 @@ class Student:
                                             self.var_mobile_no.get(),
                                             self.var_email.get(),
                                             self.var_teacher.get(),
-                                            self.take_sample_radio.get()
+                                            self.take_sample_radio.get(),
+                                            self.var_student_id.get()
                                         ))
                 conn.commit()
                 self.fetch_data()
@@ -535,10 +524,6 @@ class Student:
             except Exception as err:
                 messagebox.showerror('Error', f'Due To: {str(err)}', parent = self.root)
 
-
-
-
-                 
 
 
 if __name__ == "__main__":
